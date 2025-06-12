@@ -53,8 +53,10 @@ function App() {
   ];
 
   const [stories, setStories] = useState(list);
+  const [search, setSearch] = useState("")
 
   const filterResults = (event) => {
+    setSearch(event.target.value);
     setStories(
       list.filter(
         (story) => story.title.toLowerCase().includes(event.target.value.toLowerCase())
@@ -64,7 +66,7 @@ function App() {
 
   return (
     <div>
-      <Search result={filterResults} />
+      <Search result={filterResults} search={search} />
       <List list={stories} />
     </div>
   );
@@ -97,13 +99,14 @@ const Item = ({ story }) => {
   );
 };
 
-const Search = ({ result }) => {
+const Search = ({ result, search }) => {
   return (
     <div>
       <label htmlFor="search">Search: </label>
       <input
         type="text"
         id="search"
+        value={search}
         onChange={(e) => {
           result(e);
         }}
