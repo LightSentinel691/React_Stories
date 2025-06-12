@@ -54,8 +54,17 @@ function App() {
 
   const [stories, setStories] = useState(list);
 
+  const filterResults = (event) => {
+    setStories(
+      list.filter(
+        (story) => story.title.toLowerCase().includes(event.target.value.toLowerCase())
+      )
+    );
+  };
+
   return (
     <div>
+      <Search result={filterResults} />
       <List list={stories} />
     </div>
   );
@@ -68,7 +77,6 @@ const List = ({ list }) => {
     <ul>
       {list.map((item) => {
         const { objectID, ...story } = item;
-        console.log(objectID);
         return <Item key={objectID} story={story} />;
       })}
     </ul>
@@ -86,5 +94,21 @@ const Item = ({ story }) => {
       <span>{story.num_comments}</span> &nbsp;&nbsp;
       <span>{story.points}</span>
     </li>
+  );
+};
+
+const Search = ({ result }) => {
+  return (
+    <div>
+      <label htmlFor="search">Search: </label>
+      <input
+        type="text"
+        id="search"
+        onChange={(e) => {
+          result(e);
+        }}
+        placeholder="Search based on Title"
+      />
+    </div>
   );
 };
