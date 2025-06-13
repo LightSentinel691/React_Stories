@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useReducer } from "react";
 
 const storiesContext = createContext();
 
@@ -54,7 +54,20 @@ function App() {
     },
   ];
 
-  const [stories, setStories] = useState([]);
+  //We create our reducer function
+  const storiesReducer = (state, action) => {
+    switch (action.type) {
+      case 'SET_STORIES':
+        return action.payload;
+      case 'REMOVE_ITEM':
+        return (
+          state.filter((listing) => action.payload !== listing.objectID)
+        )
+    }
+  }
+
+
+  const [stories, dispatchStories] = useReducer(storiesReducer, list);
   const [search, setSearch] = useState("");
   const [isError, setIsError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("")
@@ -62,45 +75,60 @@ function App() {
 
   useEffect(() => {
     setIsLoading(true);
+    console.log(getAsyncData())
     getAsyncData()
     .then((result) => {
-      setStories(result.data.Stories)
+      dispatchStories({
+        type: 'SET_STORIES',
+        payload: result.data.Stories,
+      })
       setIsLoading(false);
     })
     .catch((error) => {
       setIsError(true);
-      setErrorMessage(error ?? 'Sorry, encountered an error, reload to try again')
+      setErrorMessage(error.message ?? 'Sorry, encountered an error, reload to try again');
+      setIsLoading(false);
     })
   }, [])
   
+
+
   
 
-  const filterResults = (event) => {
-    setSearch(event.target.value);
-    setStories(
-      list.filter(
-        (story) => story.title.toLowerCase().includes(event.target.value.toLowerCase())
-      )
-    );
+  const filterResults = () => {
+     return stories.filter((story) => (
+      story.title.toLowerCase().includes(search.toLowerCase())
+    ))
   };
+
+  const handleSearch = (event) => {
+    setSearch(event.target.value);
+  }
+  const handleRemoveListing = (item) => {
+    dispatchStories({
+      type:'REMOVE_ITEM',
+      payload: item.objectID
+    })
+  }
 
 
   //Simulate an Asynchronous request
   const getAsyncData = () => {
-    return new Promise((resolve) => (
-      setTimeout(
-        () => resolve({data: {Stories: list}})
-        ,2000)
-    ))
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({data: {Stories: stories}});
+      }, 2000);
+    });
   }
 
   return (
     <div>
-      <Search result={filterResults} search={search} />
-      <storiesContext.Provider value={{stories}}>
-        {isError && errorMessage}
-        {isLoading ? <p>Loading ...</p>: <List />}
-      </storiesContext.Provider>
+      <Search  search={handleSearch} searchTerm={search} />
+      {isError && <p>{errorMessage}</p>}
+      {console.log(isError)}
+      {isError ? <p>Error Occured: Reload to Try again</p> : isLoading? <p>Loading ...</p>: <storiesContext.Provider value={{filterResults, handleRemoveListing}}>
+         <List />
+      </storiesContext.Provider>}
     </div>
   );
 }
@@ -108,19 +136,18 @@ function App() {
 export default App;
 
 const List = () => {
-  const {stories} = useContext(storiesContext);
-  console.log(stories)
+  const {filterResults, handleRemoveListing} = useContext(storiesContext);
+  const result = filterResults();
   return (
     <ul>
-      {stories.map((item) => {
-        const { objectID, ...story } = item;
-        return <Item key={objectID} story={story} />;
+      {result.map((item) => {
+        return <Item key={item.objectID} story={item} handleDelete={handleRemoveListing}/>;
       })}
     </ul>
   );
 };
 
-const Item = ({ story }) => {
+const Item = ({ story, handleDelete }) => {
   return (
     <li>
       <span>
@@ -129,21 +156,22 @@ const Item = ({ story }) => {
       &nbsp;&nbsp;
       <span>{story.author}</span> &nbsp;&nbsp;
       <span>{story.num_comments}</span> &nbsp;&nbsp;
-      <span>{story.points}</span>
+      <span>{story.points}</span>&nbsp;&nbsp;
+      <span><button onClick={() => handleDelete(story)}>Delete</button></span>
     </li>
   );
 };
 
-const Search = ({ result, search }) => {
+const Search = ({ search, searchTerm }) => {
   return (
     <div>
       <label htmlFor="search">Search: </label>
       <input
         type="text"
         id="search"
-        value={search}
+        value={searchTerm}
         onChange={(e) => {
-          result(e);
+          search(e);
         }}
         placeholder="Search based on Title"
       />
