@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
+
+const storiesContext = createContext();
 
 function App() {
   const list = [
@@ -24,7 +26,7 @@ function App() {
       author: "Evan You",
       num_comments: 3,
       points: 8,
-      objectID: 3,
+      objectID: 2,
     },
     {
       title: "Angular",
@@ -32,7 +34,7 @@ function App() {
       author: "Google",
       num_comments: 6,
       points: 9,
-      objectID: 4,
+      objectID: 3,
     },
     {
       title: "Svelte",
@@ -40,7 +42,7 @@ function App() {
       author: "Rich Harris",
       num_comments: 4,
       points: 7,
-      objectID: 5,
+      objectID: 4,
     },
     {
       title: "Next.js",
@@ -48,12 +50,30 @@ function App() {
       author: "Vercel",
       num_comments: 5,
       points: 10,
-      objectID: 6,
+      objectID: 5,
     },
   ];
 
-  const [stories, setStories] = useState(list);
-  const [search, setSearch] = useState("")
+  const [stories, setStories] = useState([]);
+  const [search, setSearch] = useState("");
+  const [isError, setIsError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("")
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    setIsLoading(true);
+    getAsyncData()
+    .then((result) => {
+      setStories(result.data.Stories)
+      setIsLoading(false);
+    })
+    .catch((error) => {
+      setIsError(true);
+      setErrorMessage(error ?? 'Sorry, encountered an error, reload to try again')
+    })
+  }, [])
+  
+  
 
   const filterResults = (event) => {
     setSearch(event.target.value);
@@ -64,20 +84,35 @@ function App() {
     );
   };
 
+
+  //Simulate an Asynchronous request
+  const getAsyncData = () => {
+    return new Promise((resolve) => (
+      setTimeout(
+        () => resolve({data: {Stories: list}})
+        ,2000)
+    ))
+  }
+
   return (
     <div>
       <Search result={filterResults} search={search} />
-      <List list={stories} />
+      <storiesContext.Provider value={{stories}}>
+        {isError && errorMessage}
+        {isLoading ? <p>Loading ...</p>: <List />}
+      </storiesContext.Provider>
     </div>
   );
 }
 
 export default App;
 
-const List = ({ list }) => {
+const List = () => {
+  const {stories} = useContext(storiesContext);
+  console.log(stories)
   return (
     <ul>
-      {list.map((item) => {
+      {stories.map((item) => {
         const { objectID, ...story } = item;
         return <Item key={objectID} story={story} />;
       })}
