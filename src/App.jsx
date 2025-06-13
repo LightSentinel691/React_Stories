@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useReducer } from "react";
+import React, { createContext, useContext, useState, useEffect, useReducer, useCallback } from "react";
 
 const storiesContext = createContext();
 
@@ -75,7 +75,6 @@ function App() {
 
   useEffect(() => {
     setIsLoading(true);
-    console.log(getAsyncData())
     getAsyncData()
     .then((result) => {
       dispatchStories({
@@ -101,15 +100,17 @@ function App() {
     ))
   };
 
-  const handleSearch = (event) => {
+  const handleSearch = useCallback((event) => {
     setSearch(event.target.value);
-  }
-  const handleRemoveListing = (item) => {
+  }, [])
+
+
+  const handleRemoveListing = useCallback((item) => {
     dispatchStories({
       type:'REMOVE_ITEM',
       payload: item.objectID
     })
-  }
+  },[dispatchStories])
 
 
   //Simulate an Asynchronous request
