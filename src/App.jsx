@@ -125,7 +125,6 @@ function App() {
     <div>
       <Search  search={handleSearch} searchTerm={search} />
       {isError && <p>{errorMessage}</p>}
-      {console.log(isError)}
       {isError ? <p>Error Occured: Reload to Try again</p> : isLoading? <p>Loading ...</p>: <storiesContext.Provider value={{filterResults, handleRemoveListing}}>
          <List />
       </storiesContext.Provider>}
